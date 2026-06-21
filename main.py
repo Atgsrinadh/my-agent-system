@@ -3,11 +3,17 @@ main.py — Complete Telegram bot entry point.
 Handles all messages, files, commands, agent routing.
 Runs 24/7 on any Docker host (Railway, Render, Fly.io) — independent of your PC.
 """
+# MUST be the very first import — patches os.getenv globally so every
+# environment variable read anywhere (this file, every other module)
+# is automatically stripped of hidden/invisible characters before use.
+import env_clean
+
 import os, asyncio, tempfile, json
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+env_clean.apply()  # re-apply after dotenv loads .env file values too
 
 # Run diagnostics FIRST — before any module that could crash on a bad/missing key.
 # Prints a clear report to logs and exits cleanly with a readable reason
@@ -591,9 +597,15 @@ async def handle_agent_memory_callback(update: Update, ctx: ContextTypes.DEFAULT
 # ══════════════════════════════════════════════════════════════════════════
 
 def main():
-    token = os.getenv("TELEGRAM_TOKEN")
+    # os.getenv is already sanitized globally by env_clean (imported at top
+    # of this file) — this is just a final format sanity-check, not a fix.
+    token = os.getenv("TELEGRAM_TOKEN", "")
     if not token:
         raise ValueError("TELEGRAM_TOKEN not set in environment!")
+    if token.count(":") != 1 or not token.split(":")[0].isdigit():
+        print(f"⚠️  TELEGRAM_TOKEN looks malformed (length {len(token)}). "
+              f"Expected format: 1234567890:AAAbbbCCC... "
+              f"Double-check you copied the FULL token from @BotFather.")
 
     app = ApplicationBuilder().token(token).build()
 
