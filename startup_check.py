@@ -24,6 +24,19 @@ def run_check():
     print("  AGENT SYSTEM — STARTUP CHECK")
     print("=" * 60)
 
+    try:
+        import env_clean
+        all_keys = [k for k, _ in REQUIRED] + OPTIONAL
+        hidden_report = env_clean.diagnose(all_keys)
+        if hidden_report:
+            print("  🧹 Auto-cleaned hidden characters in:")
+            for key, info in hidden_report.items():
+                print(f"      {key} (was {info['raw_length']} chars, "
+                      f"now {info['cleaned_length']} — fixed automatically, no action needed)")
+            print("-" * 60)
+    except Exception:
+        pass
+
     missing_required = []
     for key, hint in REQUIRED:
         val = os.getenv(key)
@@ -48,7 +61,7 @@ def run_check():
         print("  🚨 CANNOT START — missing required variables above.")
         print("  Set them in Railway/Render → Variables tab, then redeploy.")
         print("=" * 60)
-        sys.exit(1)  # fail fast with a CLEAR reason, instead of a cryptic crash later
+        sys.exit(1)
 
     print("  ✅ All required variables present. Starting application...")
     print("=" * 60)
