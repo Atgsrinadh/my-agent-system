@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: agent-system
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: ADMIN_USER_ID
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: DASHBOARD_SECRET
+        sync: false
