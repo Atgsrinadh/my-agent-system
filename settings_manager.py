@@ -1,7 +1,6 @@
 """
 settings_manager.py — Runtime settings stored in Supabase.
 Lets you add/change API keys from the Dashboard — no redeploy needed.
-
 Falls back to environment variables if a setting isn't in the database yet,
 so existing env-var based deployments keep working unchanged.
 """
@@ -39,7 +38,10 @@ def get_setting(key: str, default=None):
 def set_setting(key: str, value: str):
     global _cache, _cache_time
     try:
-        sb.table("app_settings").upsert({"key": key, "value": value}).execute()
+        result = sb.table("app_settings").upsert({"key": key, "value": value}).execute()
+        if not result.data:
+            print(f"settings_manager: upsert for {key} returned no data — write may have failed silently.")
+            return False
         _cache[key] = value  # update cache immediately
         return True
     except Exception as e:
