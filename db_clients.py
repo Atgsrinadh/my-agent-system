@@ -71,10 +71,17 @@ class _Query:
         self._headers["Prefer"] = "return=representation"
         return self
 
-    def upsert(self, row):
+    def upsert(self, row, on_conflict: str = None):
         self._method = "POST"
         self._body = row
         self._headers["Prefer"] = "resolution=merge-duplicates,return=representation"
+        # PostgREST requires the conflict target column explicitly, or upsert
+        # silently no-ops on conflicting rows instead of updating them.
+        if on_conflict:
+            self._params["on_conflict"] = on_conflict
+        elif isinstance(row, dict) and "key" in row:
+            # Our tables use "key" as the natural primary key (app_settings).
+            self._params["on_conflict"] = "key"
         return self
 
     def delete(self):
